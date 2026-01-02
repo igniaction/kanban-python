@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kanban Board</title>
+    
+    <link rel="stylesheet" href="style.css" />
+    
+    <link rel="icon" href="data:," />
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>Kanban</h1>
+        <button id="new-task-btn">Nova Tarefa</button>
+    </header>
+
+    <main class="board">
+        <section class="column">
+            <h2>A Fazer</h2>
+            <div id="todo-column" class="card-container"></div>
+        </section>
+
+        <section class="column">
+            <h2>Fazendo</h2>
+            <div id="doing-column" class="card-container"></div>
+        </section>
+
+        <section class="column">
+            <h2>Feito</h2>
+            <div id="done-column" class="card-container"></div>
+        </section>
+    </main>
+
+    <div id="modal-overlay" class="hidden" role="dialog" aria-modal="true">
+        <div class="modal">
+            <h3>Nova Tarefa</h3>
+
+            <form id="task-form">
+                <label>
+                    Título
+                    <input type="text" id="task-title" placeholder="Ex: Ajustar CSS" required />
+                </label>
+
+                <label>
+                    Descrição
+                    <textarea id="task-description" rows="4" placeholder="Detalhes da tarefa..."></textarea>
+                </label>
+
+                <div class="modal-actions">
+                    <button type="button" id="cancel-btn">Cancelar</button>
+                    <button type="submit">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
