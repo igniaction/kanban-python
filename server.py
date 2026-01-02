@@ -18,11 +18,13 @@ class KanbanHandler(SimpleHTTPRequestHandler):
 
     def translate_path(self, path):
         """
-        Redireciona arquivos estáticos para a pasta /assets
+        Redireciona arquivos estáticos para a pasta /assets.
+        Rotas de API e Health não passam por aqui pois são interceptadas antes.
         """
         parsed_path = urlparse(path).path
 
-        if parsed_path.startswith("/api"):
+        # Se for API ou Health, não tentamos traduzir para caminho de arquivo
+        if parsed_path.startswith("/api") or parsed_path == "/health":
             return path
 
         if parsed_path == "/":
@@ -31,6 +33,7 @@ class KanbanHandler(SimpleHTTPRequestHandler):
         return os.path.join(os.getcwd(), ASSETS_DIR, parsed_path.lstrip("/"))
 
     def _send_json(self, data, status=200):
+        """Auxiliar para responder com JSON e headers corretos"""
         response = json.dumps(data, ensure_ascii=False).encode("utf-8")
 
         self.send_response(status)
@@ -40,6 +43,7 @@ class KanbanHandler(SimpleHTTPRequestHandler):
         self.wfile.write(response)
 
     def _read_json_body(self):
+        """Auxiliar para ler o corpo da requisição"""
         content_length = int(self.headers.get("Content-Length", 0))
         if content_length == 0:
             return {}
@@ -47,10 +51,27 @@ class KanbanHandler(SimpleHTTPRequestHandler):
         return json.loads(body)
 
     def do_GET(self):
+        """
+        Manipula requisições GET.
+        Ordem de verificação:
+        1. Health Check (Vital para K8s/Monitoramento)
+        2. API de Tarefas
+        3. Arquivos Estáticos (Frontend)
+        """
+        
+        # --- NOVO ENDPOINT: HEALTH CHECK ---
+        if self.path == "/health":
+            # Responde 200 OK imediatamente.
+            # Em cenários reais, você poderia testar a conexão com o DB aqui.
+            self._send_json({"status": "ok"})
+            return
+        # -----------------------------------
+
         if self.path == "/api/tasks":
             tasks = list_tasks()
             self._send_json(tasks)
         else:
+            # Se não for API nem Health, tenta servir arquivo estático (HTML/CSS/JS)
             super().do_GET()
 
     def do_POST(self):
@@ -117,6 +138,7 @@ def run_server(host="localhost", port=8000):
     create_database()
     server = HTTPServer((host, port), KanbanHandler)
     print(f"Servidor rodando em http://{host}:{port}")
+    print(f"Health check disponível em http://{host}:{port}/health")
     server.serve_forever()
 
 
