@@ -1,7 +1,9 @@
 import json
 import os
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse
+
+
 
 from database import (
     create_database,
@@ -10,6 +12,10 @@ from database import (
     update_task_status,
     delete_task
 )
+
+HOST = os.getenv("HOST", "0.0.0.0")
+
+PORT = int(os.getenv("PORT", "8000"))
 
 ASSETS_DIR = "assets"
 
@@ -136,7 +142,8 @@ class KanbanHandler(SimpleHTTPRequestHandler):
 
 def run_server(host="localhost", port=8000):
     create_database()
-    server = HTTPServer((host, port), KanbanHandler)
+    server_address = (HOST, PORT)
+    server = ThreadingHTTPServer(server_address, KanbanHandler)
     print(f"Servidor rodando em http://{host}:{port}")
     print(f"Health check disponível em http://{host}:{port}/health")
     server.serve_forever()

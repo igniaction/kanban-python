@@ -1,29 +1,41 @@
-# Python standard ignores
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 
-# Environments and dependencies
+# Virtualenv / environments
 .venv/
 venv/
 env/
 ENV/
+
+# Env files
 .env
+.env.*
 .envrc
 
-# Database (Sua regra específica para o Kanban)
-kanban.db
-*.db-journal
-db.sqlite3
-db.sqlite3-journal
-
-# Testing and Tools
+# Test/Lint/Typecheck caches
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 .coverage
 htmlcov/
 
-# System files
+# SQLite / state (não versionar dados)
+kanban.db
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+db.sqlite3
+db.sqlite3-journal
+
+# Pasta de dados do lab (volume do container)
+data/
+
+# OS/editor
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/

@@ -2,7 +2,8 @@ import os
 import sqlite3
 from datetime import datetime
 
-DB_NAME = os.getenv("DB_PATH", "kanban.db")
+DB_NAME = os.getenv("DB_PATH", "/data/kanban.db")
+
 
 
 def get_connection():
