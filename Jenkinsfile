@@ -1,17 +1,9 @@
 pipeline {
-  agent {
-    dockerfile {
-      filename 'ci/jenkins-agent.Dockerfile'
-      // permite docker build dentro do agente usando o daemon do host/jenkins
-      args '-v /var/run/docker.sock:/var/run/docker.sock'
-      reuseNode true
-    }
-  }
+  agent any
 
   options {
     timestamps()
     disableConcurrentBuilds()
-    // evita checkout duplicado quando você NÃO tem stage Checkout manual
   }
 
   environment {
@@ -19,6 +11,12 @@ pipeline {
   }
 
   stages {
+    stage("Checkout") {
+      steps {
+        checkout scm
+      }
+    }
+
     stage("Init") {
       steps {
         script {
@@ -29,17 +27,25 @@ pipeline {
     }
 
     stage("Lint") {
-      steps { sh "make lint" }
+      steps {
+        sh "make lint"
+      }
     }
 
     stage("Test") {
-      steps { sh "make test" }
+      steps {
+        sh "make test"
+      }
     }
 
     stage("Build Docker Image") {
       steps {
-        sh "docker build -t ${APP_NAME}:sha-${GIT_SHA} ."
-        sh "docker image ls ${APP_NAME}:sha-${GIT_SHA}"
+        sh """
+          set -eux
+          docker version
+          docker build -t ${APP_NAME}:sha-${GIT_SHA} .
+          docker image ls ${APP_NAME}:sha-${GIT_SHA}
+        """
       }
     }
   }
