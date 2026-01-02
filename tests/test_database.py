@@ -1,5 +1,5 @@
 import importlib
-import os
+
 
 def test_database_crud(tmp_path, monkeypatch):
     # Usa um DB temporário só para este teste
