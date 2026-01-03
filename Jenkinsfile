@@ -45,10 +45,10 @@ pipeline {
       steps {
         sh """
           docker run --rm \
-            -v jenkins_home:/var/jenkins_home \
+            -v infra-jenkins-factory_jenkins_home:/var/jenkins_home \
             -w "${WORKSPACE}" \
             ${env.APP_NAME}-ci:sha-${env.GIT_SHA} \
-            bash -lc "make lint && make test"
+            bash -lc 'set -eux; ls -la; test -f Makefile; make lint; make test'
         """
       }
     }
