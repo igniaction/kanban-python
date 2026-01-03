@@ -11,12 +11,6 @@ pipeline {
   }
 
   stages {
-    stage("Checkout") {
-      steps {
-        checkout scm
-      }
-    }
-
     stage("Init") {
       steps {
         script {
@@ -26,23 +20,40 @@ pipeline {
       }
     }
 
+    stage("Build CI Toolchain Image") {
+      steps {
+        sh """
+          docker build -f ci/jenkins-agent.Dockerfile -t ${APP_NAME}-ci:sha-${GIT_SHA} .
+          docker image ls ${APP_NAME}-ci:sha-${GIT_SHA}
+        """
+      }
+    }
+
     stage("Lint") {
       steps {
-        sh "make lint"
+        sh """
+          docker run --rm \
+            -v "\$PWD:/workspace" -w /workspace \
+            ${APP_NAME}-ci:sha-${GIT_SHA} \
+            make lint
+        """
       }
     }
 
     stage("Test") {
       steps {
-        sh "make test"
+        sh """
+          docker run --rm \
+            -v "\$PWD:/workspace" -w /workspace \
+            ${APP_NAME}-ci:sha-${GIT_SHA} \
+            make test
+        """
       }
     }
 
     stage("Build Docker Image") {
       steps {
         sh """
-          set -eux
-          docker version
           docker build -t ${APP_NAME}:sha-${GIT_SHA} .
           docker image ls ${APP_NAME}:sha-${GIT_SHA}
         """
