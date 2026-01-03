@@ -8,14 +8,11 @@ pipeline {
 
   environment {
     APP_NAME = "kanban-python"
-    // não fixe GIT_SHA aqui; ele será definido no Init
   }
 
   stages {
     stage("Checkout") {
       steps {
-        // Para pipeline multibranch, normalmente já vem feito,
-        // mas manter explícito evita rodar fora do workspace.
         checkout scm
       }
     }
@@ -28,7 +25,7 @@ pipeline {
             error("Não consegui obter GIT_SHA (git rev-parse retornou vazio).")
           }
           echo "Commit SHA: ${env.GIT_SHA}"
-          sh "pwd && ls -la && test -f Makefile"
+          sh 'pwd && ls -la && test -f Makefile'
         }
       }
     }
@@ -48,8 +45,8 @@ pipeline {
       steps {
         sh """
           docker run --rm \
-            -v "\${WORKSPACE}:/workspace" \
-            -w /workspace \
+            -v jenkins_home:/var/jenkins_home \
+            -w "${WORKSPACE}" \
             ${env.APP_NAME}-ci:sha-${env.GIT_SHA} \
             bash -lc "make lint && make test"
         """
