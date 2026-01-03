@@ -8,7 +8,6 @@ pipeline {
 
   environment {
     APP_NAME = "kanban-python"
-    // Definimos uma fallback caso o git falhe no init
     GIT_SHA = "latest" 
   }
 
@@ -16,13 +15,8 @@ pipeline {
     stage("Init") {
       steps {
         script {
-          // O checkout SCM automático acontece antes deste estágio. 
-          // Se o checkout falhar, o pipeline nem chegará aqui.
-          try {
-            env.GIT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-          } catch (e) {
-            error "Falha ao obter o SHA do Git. Verifique se o binário 'git' está instalado no container Jenkins."
-          }
+          // Captura o SHA curto do commit atual
+          env.GIT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
           echo "Commit SHA: ${env.GIT_SHA}"
         }
       }
@@ -30,15 +24,13 @@ pipeline {
 
     stage("Build CI Toolchain Image") {
       steps {
-        // Usamos env.APP_NAME e env.GIT_SHA para garantir a interpolação correta
-        sh """
-          docker build -f ci/jenkins-agent.Dockerfile -t ${env.APP_NAME}-ci:sha-${env.GIT_SHA} .
-        """
+        sh "docker build -f ci/jenkins-agent.Dockerfile -t ${env.APP_NAME}-ci:sha-${env.GIT_SHA} ."
       }
     }
 
     stage("Lint & Test") {
       steps {
+        // As aspas simples em volta do bash -c '...' resolvem o erro "No rule to make target"
         sh """
           docker run --rm \
             -v "\$PWD:/workspace" -w /workspace \
@@ -57,11 +49,7 @@ pipeline {
 
   post {
     always {
-      // Garantindo o acesso às variáveis de ambiente
-      echo "Build finalizado: ${env.APP_NAME}:sha-${env.GIT_SHA}"
-    }
-    success {
-      echo "Deploy liberado para a imagem: ${env.APP_NAME}:sha-${env.GIT_SHA}"
+      echo "Build finalizado para: ${env.APP_NAME}:sha-${env.GIT_SHA}"
     }
   }
 }
