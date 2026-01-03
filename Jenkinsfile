@@ -43,7 +43,7 @@ pipeline {
           docker run --rm \
             -v "\$PWD:/workspace" -w /workspace \
             ${env.APP_NAME}-ci:sha-${env.GIT_SHA} \
-            bash -c "make lint && make test"
+            bash -c 'make lint && make test'
         """
       }
     }
