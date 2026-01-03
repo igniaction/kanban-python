@@ -8,41 +8,61 @@ pipeline {
 
   environment {
     APP_NAME = "kanban-python"
-    GIT_SHA = "latest" 
+    // não fixe GIT_SHA aqui; ele será definido no Init
   }
 
   stages {
+    stage("Checkout") {
+      steps {
+        // Para pipeline multibranch, normalmente já vem feito,
+        // mas manter explícito evita rodar fora do workspace.
+        checkout scm
+      }
+    }
+
     stage("Init") {
       steps {
         script {
-          // Captura o SHA curto do commit atual
           env.GIT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+          if (!env.GIT_SHA) {
+            error("Não consegui obter GIT_SHA (git rev-parse retornou vazio).")
+          }
           echo "Commit SHA: ${env.GIT_SHA}"
+          sh "pwd && ls -la && test -f Makefile"
         }
       }
     }
 
     stage("Build CI Toolchain Image") {
       steps {
-        sh "docker build -f ci/jenkins-agent.Dockerfile -t ${env.APP_NAME}-ci:sha-${env.GIT_SHA} ."
+        sh """
+          docker build \
+            -f ci/jenkins-agent.Dockerfile \
+            -t ${env.APP_NAME}-ci:sha-${env.GIT_SHA} \
+            .
+        """
       }
     }
 
     stage("Lint & Test") {
       steps {
-        // As aspas simples em volta do bash -c '...' resolvem o erro "No rule to make target"
         sh """
           docker run --rm \
-            -v "\$PWD:/workspace" -w /workspace \
+            -v "\${WORKSPACE}:/workspace" \
+            -w /workspace \
             ${env.APP_NAME}-ci:sha-${env.GIT_SHA} \
-            bash -c 'make lint && make test'
+            bash -lc "make lint && make test"
         """
       }
     }
 
     stage("Build App Image") {
       steps {
-        sh "docker build -t ${env.APP_NAME}:sha-${env.GIT_SHA} ."
+        sh """
+          docker build \
+            -t ${env.APP_NAME}:sha-${env.GIT_SHA} \
+            .
+        """
       }
     }
   }
